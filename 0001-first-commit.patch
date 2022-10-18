@@ -1,0 +1,216 @@
+From 529204852a6c816771bc8d2cb9f6b3add5fc8d7d Mon Sep 17 00:00:00 2001
+From: MoloG83 <55248942+MoloG83@users.noreply.github.com>
+Date: Mon, 17 Oct 2022 13:11:57 +0100
+Subject: [PATCH] first  commit
+
+---
+ .idea/.gitignore                               |  3 ++
+ .idea/inspectionProfiles/profiles_settings.xml |  6 ++++
+ .idea/misc.xml                                 |  4 +++
+ .idea/modules.xml                              |  8 ++++++
+ .idea/openweather-exercise.iml                 |  8 ++++++
+ .idea/vcs.xml                                  |  6 ++++
+ openweather.py                                 | 39 ++++++++++++++++++++------
+ test.py                                        | 31 ++++++++++++++++++--
+ 8 files changed, 93 insertions(+), 12 deletions(-)
+ create mode 100644 .idea/.gitignore
+ create mode 100644 .idea/inspectionProfiles/profiles_settings.xml
+ create mode 100644 .idea/misc.xml
+ create mode 100644 .idea/modules.xml
+ create mode 100644 .idea/openweather-exercise.iml
+ create mode 100644 .idea/vcs.xml
+
+diff --git a/.idea/.gitignore b/.idea/.gitignore
+new file mode 100644
+index 0000000..26d3352
+--- /dev/null
++++ b/.idea/.gitignore
+@@ -0,0 +1,3 @@
++# Default ignored files
++/shelf/
++/workspace.xml
+diff --git a/.idea/inspectionProfiles/profiles_settings.xml b/.idea/inspectionProfiles/profiles_settings.xml
+new file mode 100644
+index 0000000..105ce2d
+--- /dev/null
++++ b/.idea/inspectionProfiles/profiles_settings.xml
+@@ -0,0 +1,6 @@
++<component name="InspectionProjectProfileManager">
++  <settings>
++    <option name="USE_PROJECT_PROFILE" value="false" />
++    <version value="1.0" />
++  </settings>
++</component>
+\ No newline at end of file
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+new file mode 100644
+index 0000000..a2e120d
+--- /dev/null
++++ b/.idea/misc.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7" project-jdk-type="Python SDK" />
++</project>
+\ No newline at end of file
+diff --git a/.idea/modules.xml b/.idea/modules.xml
+new file mode 100644
+index 0000000..cbe0190
+--- /dev/null
++++ b/.idea/modules.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="ProjectModuleManager">
++    <modules>
++      <module fileurl="file://$PROJECT_DIR$/.idea/openweather-exercise.iml" filepath="$PROJECT_DIR$/.idea/openweather-exercise.iml" />
++    </modules>
++  </component>
++</project>
+\ No newline at end of file
+diff --git a/.idea/openweather-exercise.iml b/.idea/openweather-exercise.iml
+new file mode 100644
+index 0000000..d0876a7
+--- /dev/null
++++ b/.idea/openweather-exercise.iml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<module type="PYTHON_MODULE" version="4">
++  <component name="NewModuleRootManager">
++    <content url="file://$MODULE_DIR$" />
++    <orderEntry type="inheritedJdk" />
++    <orderEntry type="sourceFolder" forTests="false" />
++  </component>
++</module>
+\ No newline at end of file
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+new file mode 100644
+index 0000000..94a25f7
+--- /dev/null
++++ b/.idea/vcs.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="VcsDirectoryMappings">
++    <mapping directory="$PROJECT_DIR$" vcs="Git" />
++  </component>
++</project>
+\ No newline at end of file
+diff --git a/openweather.py b/openweather.py
+index 7b8d705..4d1debd 100644
+--- a/openweather.py
++++ b/openweather.py
+@@ -1,11 +1,14 @@
+ import json
+ import requests
++import pandas as pd
++
++BASE_URL = "https://api.openweathermap.org/data/2.5/"
+ 
+-BASE_URL = "https://api.openweathermap.org/data/2.5"
+ 
+ class OpenWeatherException(Exception):
+     pass
+ 
++
+ class OpenWeather:
+     def __init__(self, api_key):
+         """Initialize the OpenWeather class with the API key
+@@ -19,15 +22,33 @@ class OpenWeather:
+ 
+         self.api_key = api_key
+ 
++    """
++        def current_weather_for_city(self, city):
++            Get current weather for a city
+ 
+-    def current_weather_for_city(self, city):
+-        """Get current weather for a city
++            Will return a dictionary with the current weather for a city.
++            Currently does not handle API errors gracefully, so it's up to the
++            calling application to detect 401s or the like.
++            
+ 
+-        Will return a dictionary with the current weather for a city.
+-        Currently does not handle API errors gracefully, so it's up to the
+-        calling application to detect 401s or the like.
+-        """
++            url = f"{BASE_URL}/weather?q={city}&appid={self.api_key}&units=metric"
++            response = requests.get(url)
++            return json.loads(response.text)
++    """
+ 
+-        url = f"{BASE_URL}/weather?q={city}&appid={self.api_key}&units=metric"
+-        response = requests.get(url)
++    def max_temp_forecast(self, city, temp):
++        temp = f"{BASE_URL}/weather?q={city}&appid={self.api_key}&units=metric"
++        response = requests.get(temp)
+         return json.loads(response.text)
++
++    def temp_interval(self, city, temp):
++        temps = f"{BASE_URL}/forecast?q={city}&appid={self.api_key}&units=metric"
++        response = requests.get(temps)
++        x = response.json()
++
++        df = pd.DataFrame(x['list'])  # creating a list of the json with pandas is the only option I can think of
++        count = 0
++
++        for i in range(len(df)):
++            if(df.loc[i, 'temp_max'] >= temp):
++                count += 1
+\ No newline at end of file
+diff --git a/test.py b/test.py
+index 2c01356..bf169f5 100644
+--- a/test.py
++++ b/test.py
+@@ -2,10 +2,12 @@
+ 
+ import os
+ import sys
+-
+ import openweather
++import requests
++import pandas as pd
+ 
+-api_key = os.environ.get("OPENWEATHER_API_KEY", None)
++api_key = os.environ.get("44437e7ffa90fc0a1a7d6667fe712b8a", None)
++loc_list = ['Skibbereen,ie', 'London,uk', 'Paris,fr']
+ 
+ try:
+     ow = openweather.OpenWeather(api_key)
+@@ -13,8 +15,31 @@ except openweather.OpenWeatherException:
+     print("You must set the environmental variable OPENWEATHER_API_KEY")
+     sys.exit(1)
+ 
+-data = ow.current_weather_for_city("Skibbereen, ie")
++data = ow.current_weather_for_city("Skibbereen,ie")
+ 
+ location = data["name"]
++temp = data['main']['temp_max']
+ weather = data["weather"][0]
+ print(f"{location}: {weather['main']} - {weather['description']}")
++
++
++def coldest_location(locations_list, self=None):
++
++    for i in loc_list:
++        city, country = i.split(',')
++        temps = f"{openweather.BASE_URL}/forecast?q={openweather.city}&appid={self.api_key}&units=metric"
++        response = requests.get(temps)
++        x = response.json()
++        df = pd.DataFrame(x['list'])
++        df['city'] = city
++        loc_list.append(df)
++
++
++"""
++ow1 = openweather.OpenWeather(api_key)
++data1 = ow1.max_temp_forecast("Dublin, ie")
++location1 = data1["name"]
++temp1 = data1['main']['temp_max']
++for temperatures in data1:
++    print(temp1)
++"""
+-- 
+2.15.0
+
